@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .map{
+            width: 800px;
+            height: 600px;
+            background-color: #cccccc;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<div class="map"></div>
+<div class="garden"></div>
+<script>
+    var gar = document.querySelector(".garden");
+    var num = 0;
+    gar.innerHTML = "你的分数为："+num;
+    (function () {
+        var elements = [];
+      function Food(width, height, color, x, y) {
+          this.width = width || 20;
+          this.height = height || 20;
+          this.color = color || "green";
+          this.x = x || 0;
+          this.y = y || 0;
+      }
+      Food.prototype.init = function (map) {
+          remove();
+          var div = document.createElement("div");
+          map.appendChild(div);
+          div.style.width = this.width + "px";
+          div.style.height = this.height + "px";
+          div.style.position = "absolute";
+          div.style.backgroundColor = this.color;
+          this.x = parseInt(Math.random()*map.offsetWidth/this.width)*this.width;
+          this.y = parseInt(Math.random()*map.offsetHeight/this.height)*this.height;
+          div.style.left = this.x + "px";
+          div.style.top = this.y + "px";
+          elements.push(div);
+      }
+      window.Food = Food;
+      function remove() {
+           for(var i =0;i<elements.length;i++){
+               var els = elements[i];
+               els.parentNode.removeChild(els);
+               elements.splice(i,1);
+           }
+      }
+    }());
+    //蛇
+    (function () {
+        var elements = [];
+        function Snake(width, height, direaction) {
+            this.width = width || 20;
+            this.height = height || 20;
+            this.direaction = direaction || "right";
+            this.body = [
+                {x:3,y:2,color:"red"},
+                {x:2,y:2,color:"orange"},
+                {x:1,y:2,color:"orange"}
+            ]
+        }
+        Snake.prototype.init = function (map) {
+            remove();
+            for(var i = 0;i<this.body.length;i++){
+                var obj = this.body[i];
+                var div = document.createElement("div");
+                map.appendChild(div);
+                div.style.width = this.width + "px";
+                div.style.height = this.height + "px";
+                div.style.left = obj.x*this.width + "px";
+                div.style.top = obj.y *this.height + "px";
+                div.style.backgroundColor = obj.color;
+                div.style.position = "absolute";
+                elements.push(div);
+            }
+        }
+        Snake.prototype.move = function (map, food) {
+            var i = this.body.length-1;
+            for(;i>0;i--){
+                this.body[i].x = this.body[i-1].x;
+                this.body[i].y = this.body[i-1].y;
+            }
+            switch (this.direaction){
+                case "top":
+                    this.body[0].y-=1;
+                    break;
+                case "bottom":
+                    this.body[0].y+=1;
+                    break;
+                case "left":
+                    this.body[0].x-=1;
+                    break;
+                case "right":
+                    this.body[0].x+=1;
+                    break;
+            }
+            var headX = this.body[0].x*this.width;
+            var heasY = this.body[0].y*this.height;
+            console.log(headX+"========"+food.x);
+            if(headX == food.x && heasY == food.y){
+                var last = this.body[this.body.length-1];
+                this.body.push({
+                    x:last.x,
+                    y:last.y,
+                    color:last.color
+                })
+                food.init(map);
+                num +=10;
+                gar.innerHTML = "你的分数为："+num;
+            }
+        }
+        function remove() {
+            var i = elements.length-1;
+            for(;i>=0;i--){
+                var eles = elements[i];
+                eles.parentNode.removeChild(eles);
+                elements.splice(i,1);
+            }
+        }
+        window.Snake = Snake;
+    }());
+    //游戏
+    (function () {
+      var that;
+      function Game(map) {
+          this.food = new Food();
+          this.snake = new Snake();
+          this.map = map;
+          that = this;
+      }
+      Game.prototype.init = function () {
+          this.food.init(this.map);
+          this.snake.init(this.map);
+          this.runsnake();
+          this.keydown();
+      }
+      Game.prototype.runsnake = function () {
+         var timer = setInterval(function () {
+              this.snake.move(this.map,this.food);
+              this.snake.init(this.map);
+              var maxX = this.map.offsetWidth/this.snake.width;
+              var maxY = this.map.offsetHeight/this.snake.height;
+              var headX = this.snake.body[0].x;
+              var headY = this.snake.body[0].y;
+              if(headX<0 || headX >= maxX){
+                  clearInterval(timer);
+                  alert("游戏结束");
+              }
+             if(headY<0 || headY >= maxY){
+                 clearInterval(timer);
+                 alert("游戏结束");
+             }
+          }.bind(that),150);
+      }
+      Game.prototype.keydown = function () {
+          document.addEventListener("keydown",function (ev) {
+             switch (ev.keyCode){
+                 case 38:
+                     this.snake.direaction = "top";
+                     break;
+                 case 40:
+                     this.snake.direaction = "bottom";
+                     break;
+                 case 37:
+                     this.snake.direaction = "left";
+                     break;
+                 case 39:
+                     this.snake.direaction = "right";
+                     break;
+             }
+          }.bind(that),false)
+      }
+      window.Game = Game;
+    }());
+    var gm = new Game(document.querySelector(".map"));
+    gm.init();
+</script>
+</body>
+</html>
